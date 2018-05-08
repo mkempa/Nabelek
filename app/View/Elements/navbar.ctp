@@ -20,7 +20,7 @@
                 <li><?php echo $this->Html->link('Search for specimens', '/records/search'); ?></li>
                 <li><?php echo $this->Html->link('Map of all localities', '/pages/map'); ?></li>
                 <li><?php echo $this->Html->link('František Nábělek', '/pages/biography', array('title' => 'Biography data and list of publications')); ?></li>
-                <li><?php echo $this->Html->link("Nábělek's papers", '/pages/papers'); ?></li>
+                <li><?php echo $this->Html->link("Nábělek's papers", 'https://www.biodiversitylibrary.org/item/217548#page/3/mode/1up'); ?></li>
             </ul>
             <?php
             $query = $this->params->query;
