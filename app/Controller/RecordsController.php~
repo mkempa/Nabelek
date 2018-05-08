@@ -1,0 +1,150 @@
+<?php
+
+require_once 'D:\Apache Software Foundation\xampp\htdocs\Nabelek\app\Lib\dBug.php';
+App::uses('AppController', 'Controller');
+
+class RecordsController extends AppController {
+
+    public $uses = array('Brumit1', 'Brumit2', 'Brumit3', 'Brumit4', 'Genus',
+        'Herbar', 'HerbarPolozky', 'MenaTaxonov', 'Udaj', 'SkupRev');
+    public $components = array('Records');
+    public $helpers = array('Html', 'Form', 'Format');
+
+    public function search() {
+        $data = $this->request->data;
+        $this->set(compact('data'));
+        $type = $data['Filter']['type'];
+        $term = $data['Filter']['search-term'];
+        //find basic ids by conditions
+        $this->Udaj->unbindModel(array('hasMany' => 'SkupRevRev'));
+        $udajs = $this->Udaj->find('all', array(
+            'fields' => array('DISTINCT Udaj.id', 'HerbarPolozky.cislo_ck_full',
+                'ListOfSpeciesOriginal.meno', 'ListOfSpeciesOriginal.autori',
+                'ListOfSpeciesRev.meno', 'ListOfSpeciesRev.autori',
+                'Lokality.opis_lokality', 'B4.meno'),
+            'joins' => $this->_joins(),
+            'conditions' => $this->_conditions($type, $term),
+            //'limit' => 5,
+            'order' => array('HerbarPolozky.cislo_ck_full')
+        ));
+        $this->set(compact('udajs'));
+    }
+
+    public function view($id) {
+        if (!$id) {
+            throw new NotFoundException(__('Record not found'));
+        }
+        $udaj = $this->Udaj->find('first', array(
+            'conditions' => array(
+                'HerbarPolozky.cislo_ck_full' => $id
+            )
+        ));
+        $this->Brumit4->unbindModel(array('hasMany' => 'Lokality'));
+        $worlds = $this->Brumit4->find('all', array(
+            'fields' => array('Brumit4.meno', 'Brumit3.meno', 'Brumit2.meno', 'Brumit1.meno'),
+            'joins' => $this->Records->worldsJoin(),
+            'conditions' => array('Brumit4.id' => $udaj['Lokality']['id_brumit4'])));
+        $udaj['Worlds'] = $worlds[0];
+        $this->Herbar->unbindModel(array('hasMany' => 'HerbarPolozky'));
+        $udaj = Set::merge($udaj, $this->Herbar->findById($udaj['HerbarPolozky']['id_herbar']));
+        //$udaj['SkupRevOrig']['MenaTaxonovOrig'] = $this->_identification($udaj['SkupRevOrig']);
+        $udaj['SkupRevOrig'] = Set::merge($udaj['SkupRevOrig'], $this->_identification($udaj['SkupRevOrig']));
+        $countSRR = count($udaj['SkupRevRev']);
+        if ($countSRR > 0) {
+            foreach ($udaj['SkupRevRev'] as &$rev) {
+                $rev = Set::merge($rev, $this->_identification($rev));
+            }
+        }
+        $this->set(compact('udaj'));
+    }
+
+    private function _identification($skupRev) {
+        $this->MenaTaxonov->unbindModel(array('hasOne' => 'SkupRev'));
+        $mena = $this->MenaTaxonov->findById($skupRev['id_meno_rast_prirad']);
+        $this->Genus->unbindModel(array('hasMany' => 'ListOfSpecies'));
+        $genus = $this->Genus->findById($mena['ListOfSpecies']['id_genus']);
+        $this->SkupRev->unbindModel(array('belongsTo' => array('Udaj', 'MenaTaxonov')));
+        $detBy = $this->SkupRev->findById($skupRev['id']);
+        $res = Set::merge($mena, $genus, $detBy);
+        return $res;
+    }
+
+    private function _joins() {
+        $joins = array(
+            array(
+                'table' => 'mena_taxonov',
+                'alias' => 'MenaTaxonovOrig',
+                'type' => 'LEFT',
+                'conditions' => array('SkupRevOrig.id_meno_rast_prirad = MenaTaxonovOrig.id')
+            ),
+            array(
+                'table' => 'list_of_species',
+                'alias' => 'ListOfSpeciesOriginal',
+                'type' => 'LEFT',
+                'conditions' => array('MenaTaxonovOrig.id_std_meno = ListOfSpeciesOriginal.id')
+            ),
+            array(
+                'table' => 'v_skup_rev_najnovsie_revizie',
+                'alias' => 'LatestRev',
+                'type' => 'LEFT',
+                'conditions' => array('Udaj.id = LatestRev.id_udaj')
+            ),
+            array(
+                'table' => 'skup_rev',
+                'alias' => 'SkupRevRev',
+                'type' => 'LEFT',
+                'conditions' => array('SkupRevRev.id = LatestRev.id')
+            ),
+            array(
+                'table' => 'mena_taxonov',
+                'alias' => 'MenaTaxonovRev',
+                'type' => 'LEFT',
+                'conditions' => array('SkupRevRev.id_meno_rast_prirad = MenaTaxonovRev.id')
+            ),
+            array(
+                'table' => 'list_of_species',
+                'alias' => 'ListOfSpeciesRev',
+                'type' => 'LEFT',
+                'conditions' => array('MenaTaxonovRev.id_std_meno = ListOfSpeciesRev.id')
+            ),
+            array(
+                'table' => 'brumit4',
+                'alias' => 'B4',
+                'type' => 'LEFT',
+                'conditions' => array('Lokality.id_brumit4 = B4.id')
+            )
+        );
+        return $joins;
+    }
+
+    private function _conditions($type, $term) {
+        $tterm = trim($term);
+        $conditions = array();
+        if ($type == 'name') {
+            $name = '%' . strtolower($tterm) . '%';
+            $conditions[] = array('OR' => array('ListOfSpeciesOriginal.meno ILIKE' => $name, 'ListOfSpeciesRev.meno ILIKE' => $name));
+        }
+        if ($type == 'authors') {
+            $authors = array_map('trim', preg_split('/[\s,]+/', $tterm));
+            $ors = array();
+            foreach ($authors as $author) {
+                $a = '%' . strtolower($author) . '%';
+                $ors = Set::merge($ors, array('ListOfSpeciesOriginal.autori ILIKE' => $a, 'ListOfSpeciesRev.autori ILIKE' => $a));
+            }
+            $conditions[] = array('OR' => $ors);
+        }
+        if ($type == 'barcode') {
+            $barcode = '%' . strtoupper($tterm) . '%';
+            $conditions['HerbarPolozky.cislo_ck_full LIKE'] = $barcode;
+        }
+        if ($type == 'free') { //search in all of the above, locality description, collection number, brummit4
+            $t = '%' . strtolower($tterm) . '%';
+            $conditions[] = array('OR' => array('ListOfSpeciesOriginal.meno ILIKE' => $t, 'ListOfSpeciesOriginal.autori ILIKE' => $t,
+                    'ListOfSpeciesRev.meno ILIKE' => $t, 'ListOfSpeciesRev.autori ILIKE' => $t,
+                    'HerbarPolozky.cislo_ck_full ILIKE' => $t, 'HerbarPolozky.cislo_zberu' => $t,
+                    'Lokality.opis_lokality ILIKE' => $t, 'B4.meno ILIKE' => $t));
+        }
+        return array('AND' => array('HerbarPolozky.cislo_ck_full LIKE' => 'SAV%', $conditions));
+    }
+
+}

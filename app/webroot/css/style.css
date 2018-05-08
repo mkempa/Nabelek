@@ -1,0 +1,62 @@
+/*
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+*/
+/* 
+    Created on : May 28, 2015, 3:11:58 PM
+    Author     : Matus
+*/
+
+html,body { height: 100%; }
+#navbar-image { width: 100%; background-color: #ead9ac; }
+
+#content { margin-top: 200px; margin-bottom: 150px; height: 100%; }
+
+#img-buttons { padding: 5px 0 20px 0; }
+
+#previews { padding: 20px 0; border-top: 1px solid #cecece; border-bottom: 1px solid #cecece; }
+
+#map-container { height: 300px; }
+#locations-map { height: 600px; }
+#nabelek-info-wrapper { width: 100px; }
+
+.search-result { border-bottom: 1px solid #cecece; padding: 10px 0; }
+.search-result .label { margin-bottom: 10px; }
+.smaller { font-size: smaller; color: #777; }
+
+#bugzilla { width: 100%; height: 30px; font-size: large; }
+#bugzilla a { color: #000; }
+#footer { width: 100%; background-color: #262626; color: #fff; font-size: small; }
+#footer .container { padding-top: 20px; padding-bottom: 20px; }
+
+#details { padding-bottom: 50px; }
+#comments { padding-top: 50px; border-top: 1px solid #cecece; }
+#comments a.thumbnail { display: inline-block; margin-bottom: -20px; }
+a.comment { color: #000; }
+a.comment:hover { text-decoration: none; }
+div.comment:hover { border: 1px solid #66afe9; }
+#reply-fields { margin-top: 5px; }
+
+.marg-1 { margin-left: 20px; }
+.marg-2 { margin-left: 24px; }
+.marg-3 { margin-left: 36px; }
+.marg-4 { margin-left: 48px; }
+
+/*-- Cycle --*/
+.custom-pager { 
+    text-align: center; width: 100%; z-index: 500; /*position: absolute; top: 5px; overflow: hidden;*/
+}
+.custom-pager span { 
+    font-family: arial; font-size: 30px; width: 16px; height: 16px; margin-top: -14px;
+    display: inline-block; color: #ccc; cursor: pointer; 
+}
+.custom-pager span.cycle-pager-active { color: #D69746;}
+.custom-pager > * { cursor: pointer;}
+
+#caption { font-family: arial; font-size: 1.3em; color: #fff; z-index: 500; background-color: #333; margin: 5px 0 0 0; padding: 5px; border-radius: 3px; }
+
+.lat-lon .input-group-addon { padding: 6px 2px; }
+.lat-lon .col-md-3 { padding-left: 1px; padding-right: 1px; }
+.lat-lon .col-md-3:first-child { padding-left: 15px; }
+.lat-lon .col-md-3:last-child { padding-right: 15px; }
