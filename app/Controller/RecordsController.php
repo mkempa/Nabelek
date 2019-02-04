@@ -73,7 +73,7 @@ class RecordsController extends AppController {
             throw new NotFoundException(__('Record not found'));
         }
         //$comments = $this->UdajComment->generateTreeList(array('UdajComment.id_udaj' => $udaj['Udaj']['id']), null, null, '_');
-        $comments = $this->UdajComment->findCompleteTree($udaj['Udaj']['id']);
+//        $comments = $this->UdajComment->findCompleteTree($udaj['Udaj']['id']);
 
         $this->Brumit4->unbindModel(array('hasMany' => 'Lokality'));
         $worlds = $this->Brumit4->find('all', array(
@@ -91,7 +91,8 @@ class RecordsController extends AppController {
                 $rev = Set::merge($rev, $this->_identification($rev));
             }
         }
-        $this->set(compact('udaj', 'comments'));
+//        $this->set(compact('udaj', 'comments'));
+        $this->set(compact('udaj'));
     }
 
     private function _identification($skupRev) {
